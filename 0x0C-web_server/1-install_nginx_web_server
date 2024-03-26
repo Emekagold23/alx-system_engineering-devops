@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# installing Nginx on Web-Sever-01
+# where nginx is listenning on port 80
+# serves a page that contains the string Hello World!
+
+# Updating Packages and installing nginx
+sudo apt-get update
+sudo apt-get -y install nginx
+
+# Configuring the Uncomplicated Firewall (UFW) to allow incoming traffic for the Nginx HTTP service
+sudo ufw allow 'Nginx HTTP'
+
+# Creating an index.html page
+echo "Hello World!" | sudo tee /var/www/html/index.html
+
+# Testing Nginx configurations for Syntax errors
+sudo nginx -t
+
+# Restarting Nginx
+sudo service nginx restart
