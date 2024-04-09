@@ -13,7 +13,7 @@ active_ips=$(ip -o -4 addr show scope global | awk '{split($4, a, "/"); print a[
 
 # Verify if Nginx is listening on port 80 for each active IPv4 IP
 for ip in $active_ips; do
-    if ! sudo lsof -i:${ip}:80 &> /dev/null; then
+    if ! sudo lsof -i:"${ip}":80 &> /dev/null; then
         echo "Configuring Nginx to listen on port 80 for IP $ip..."
         # Update Nginx configuration to listen on port 80 for the IP
         echo "server {
@@ -23,8 +23,8 @@ for ip in $active_ips; do
                 root /var/www/html;
                 index index.html;
             }
-        }" | sudo tee /etc/nginx/sites-available/$ip >/dev/null
-        sudo ln -sf /etc/nginx/sites-available/$ip /etc/nginx/sites-enabled/
+        }" | sudo tee "/etc/nginx/sites-available/$ip" >/dev/null
+        sudo ln -sf "/etc/nginx/sites-available/$ip" /etc/nginx/sites-enabled/
     fi
 done
 
