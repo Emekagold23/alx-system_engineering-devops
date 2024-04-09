@@ -1,22 +1,35 @@
 #!/usr/bin/env bash
-# Debugging nginx port 80
+# debugging nginx port 80
 
-# Check if the default Nginx configuration file exists
-if [ ! -f /etc/nginx/sites-available/default ]; then
-    echo "Error: Nginx default configuration file not found at /etc/nginx/sites-available/default"
-    exit 1
+# Check if Nginx is installed
+if ! command -v nginx &> /dev/null; then
+    echo "Nginx is not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y nginx
 fi
 
-# Check if a symbolic link already exists at /etc/nginx/sites-enabled/default
-if [ -L /etc/nginx/sites-enabled/default ]; then
-    echo "Removing existing symbolic link for Nginx default configuration..."
-    sudo unlink /etc/nginx/sites-enabled/default
-fi
+# Get a list of active IPv4 IPs
+active_ips=$(ip -o -4 addr show scope global | awk '{split($4, a, "/"); print a[1]}')
 
-# Create a symbolic link for the default Nginx configuration
-echo "Creating symbolic link for Nginx default configuration..."
-sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# Verify if Nginx is listening on port 80 for each active IPv4 IP
+for ip in $active_ips; do
+    if ! sudo lsof -i:${ip}:80 &> /dev/null; then
+        echo "Configuring Nginx to listen on port 80 for IP $ip..."
+        # Update Nginx configuration to listen on port 80 for the IP
+        echo "server {
+            listen $ip:80;
+            server_name _;
+            location / {
+                root /var/www/html;
+                index index.html;
+            }
+        }" | sudo tee /etc/nginx/sites-available/$ip >/dev/null
+        sudo ln -sf /etc/nginx/sites-available/$ip /etc/nginx/sites-enabled/
+    fi
+done
 
-# Restart Nginx service
+# Restart Nginx to apply the configuration changes
 echo "Restarting Nginx service..."
 sudo service nginx restart
+
+echo "Nginx configured to listen on port 80 for all active IPv4 IPs."
