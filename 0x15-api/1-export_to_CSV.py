@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 """ Export api to csv"""
 import csv
+import json
 import requests
 import sys
-import json
 
 if __name__ == '__main__':
     user = sys.argv[1]
